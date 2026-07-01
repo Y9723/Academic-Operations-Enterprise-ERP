@@ -379,7 +379,7 @@
                     </div>
                 </section>
 
-                <!-- 📅 ROUTINE TIMETABLE MANAGER (WITH PDF DISK UPLOAD & VIEW) -->
+                <!-- 📅 ROUTINE TIMETABLE MANAGER -->
                 <section id="timetable" class="content-section">
                     <h2>Academic Routine Configuration Hub</h2>
                     <div class="grid-2">
@@ -449,7 +449,7 @@
                     </div>
                 </section>
 
-                <!-- 📚 DIGITAL SYLLABUS DISCOVERY MANAGER (WITH PDF VIEWER) -->
+                <!-- 📚 DIGITAL SYLLABUS MANAGER -->
                 <section id="syllabus" class="content-section">
                     <h2>Digital Syllabus Repository Document Vault</h2>
                     <div class="grid-2">
@@ -526,6 +526,7 @@
                                             <th>Date Log</th>
                                             <th>Course Subject</th>
                                             <th>Status Metrics</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="summary-body"></tbody>
@@ -584,7 +585,7 @@
                     </div>
                 </section>
 
-                <!-- 📆 CALENDAR & DAILY LOG Remarks -->
+                <!-- 📆 CALENDAR & LOG NOTES -->
                 <section id="calendar-notes" class="content-section">
                     <h2>Academic Event Tracker Logs</h2>
                     <div class="grid-2">
@@ -636,7 +637,7 @@
     <!-- ⚡ SYSTEM MASTER SCRIPTS LAYER ENGINE CONTROL MAPS -->
     <script>
         let currentUser = null;
-        let globalDatabase = JSON.parse(localStorage.getItem('uni_core_users_v3')) || {};
+        let globalDatabase = JSON.parse(localStorage.getItem('uni_core_users_v4')) || {};
         let state = { timetable: [], attendance: [], notes: [], syllabus: [], timetableFile: '', settings: { name: '', sem: '', roll: '', avatar: '' } };
         let attendanceChart = null;
         let tempSyllabusFileBase64 = '';
@@ -667,7 +668,7 @@
                 settings: { name: name, sem: 'Semester 4', roll: '01', avatar: '' }
             };
 
-            localStorage.setItem('uni_core_users_v3', JSON.stringify(globalDatabase));
+            localStorage.setItem('uni_core_users_v4', JSON.stringify(globalDatabase));
             alert("Student Credentials Allocated Securely!");
             toggleAuthCard(false);
             e.target.reset();
@@ -684,6 +685,7 @@
                 
                 if (!state.syllabus) state.syllabus = [];
                 if (!state.timetableFile) state.timetableFile = '';
+                if (!state.attendance) state.attendance = [];
                 
                 bootPortalEnvironment();
             } else {
@@ -725,7 +727,7 @@
             }
         });
 
-        // TIMETABLE FILE UPLOAD (PDF / IMAGE) CONTROLLER  
+        // TIMETABLE FILE UPLOAD CONTROLLER  
         document.getElementById('timetable-file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(file) {
@@ -777,7 +779,7 @@
             }
         }
 
-        // SYLLABUS DISCOVERY CONTROLLER WITH ACTUAL PDF STREAM
+        // SYLLABUS DISCOVERY CONTROLLER
         document.getElementById('syllabus-file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(file) {
@@ -808,7 +810,7 @@
             
             tempSyllabusFileBase64 = '';
             e.target.reset();
-            alert("Digital Syllabus PDF/Image structured node configured successfully!");
+            alert("Digital Syllabus PDF/Image configured successfully!");
         };
 
         function renderSyllabus() {
@@ -816,7 +818,7 @@
             listContainer.innerHTML = '';
 
             if(state.syllabus.length === 0) {
-                listContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No modular syllabus instances logged inside structural repository maps.</p>';
+                listContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No modular syllabus instances logged.</p>';
                 return;
             }
 
@@ -873,7 +875,7 @@
         function commitCurrentStateToDisk() {
             if(!currentUser) return;
             globalDatabase[currentUser] = state;
-            localStorage.setItem('uni_core_users_v3', JSON.stringify(globalDatabase));
+            localStorage.setItem('uni_core_users_v4', JSON.stringify(globalDatabase));
         }
 
         function initNavigation() {
@@ -905,7 +907,7 @@
             tbody.innerHTML = '';
             
             if(state.timetable.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No interactive modules routine mapped.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);;">No interactive modules routine mapped.</td></tr>`;
                 return;
             }
             state.timetable.forEach((item, idx) => {
@@ -938,16 +940,50 @@
             
             commitCurrentStateToDisk();
             renderDashboard();
-            alert(`Compliance verification logged successfully for ${lecture.subject}!`);
+            alert(`Attendance logged successfully for ${lecture.subject}!`);
         }
 
+        // RENDER ATTENDANCE BLOCK WITH REAL DELETE LOGIC
         function renderAttendanceBlock() {
             const tbody = document.getElementById('summary-body');
             tbody.innerHTML = '';
-            const sorted = [...state.attendance].sort((a,b) => new Date(b.date) - new Date(a.date));
-            sorted.slice(0, 10).forEach(item => {
-                tbody.innerHTML += `<tr><td>${item.date}</td><td><b>${item.subject}</b></td><td class="${item.status === 'Present' ? 'text-success' : 'text-danger'}"><b>${item.status}</b></td></tr>`;
+            
+            if(state.attendance.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No attendance logged yet.</td></tr>`;
+                return;
+            }
+
+            // Map original index to tracking for correct deletion logic after sorting
+            let mappedAttendance = state.attendance.map((item, originalIndex) => {
+                return { ...item, originalIndex: originalIndex };
             });
+
+            // Sort by latest date
+            mappedAttendance.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            mappedAttendance.slice(0, 15).forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td><b>${item.subject}</b></td>
+                        <td class="${item.status === 'Present' ? 'text-success' : 'text-danger'}"><b>${item.status}</b></td>
+                        <td>
+                            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; border-radius:4px;" onclick="deleteAttendanceLog(${item.originalIndex})">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // DESTRUCTION EXECUTION METHOD FOR SPECIFIC LOGGED ATTENDANCE NODE
+        function deleteAttendanceLog(originalIndex) {
+            if(confirm("Are you sure you want to delete this specific attendance entry log?")) {
+                state.attendance.splice(originalIndex, 1);
+                commitCurrentStateToDisk();
+                renderDashboard();
+                renderAttendanceBlock(); // Refresh active dynamic view state
+            }
         }
 
         function renderReportsAndCharts() {
@@ -986,9 +1022,9 @@
                 type: 'bar',
                 data: {
                     labels: chartLabels,
-                    datasets: [{ label: 'Operational Compliance Execution Ratio (%)', data: chartPercentages, backgroundColor: '#6b0c23', borderRadius: 6 }]
+                    datasets: [{ label: 'Operational Compliance Ratio (%)', data: chartPercentages, backgroundColor: '#6b0c23', borderRadius: 6 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min:0, max:100 } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
             });
         }
 
@@ -1127,6 +1163,7 @@
                     state = parsed; 
                     if(!state.syllabus) state.syllabus = [];
                     if(!state.timetableFile) state.timetableFile = '';
+                    if(!state.attendance) state.attendance = [];
                     commitCurrentStateToDisk(); alert("System snapshot matrices deployment secure."); window.location.reload();
                 } catch { alert("Fatal structure deployment tracking exception map mismatch."); }
             };
