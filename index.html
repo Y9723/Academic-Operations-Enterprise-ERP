@@ -216,7 +216,7 @@
 </head>
 <body>
 
-    <!-- 🔐 SCREEN A: LOGIN / REGISTER ACCREDITATION -->
+    <!-- 🔐 SCREEN A: LOGIN / REGISTER -->
     <div id="auth-wall" class="auth-container">
         <!-- Login Card -->
         <div id="login-card" class="auth-card">
@@ -264,7 +264,7 @@
     </div>
 
 
-    <!-- 🏛️ SCREEN B: MAIN SYSTEM HUB -->
+    <!-- 🏛️ SCREEN B: MAIN SYSTEM HUB (SPA) -->
     <div id="portal-hub" class="portal-wrapper">
         <!-- Header -->
         <header class="navbar">
@@ -526,7 +526,7 @@
                                             <th>Date Log</th>
                                             <th>Course Subject</th>
                                             <th>Status Metrics</th>
-                                            <th>Action</th>
+                                            <th>Action Operations</th>
                                         </tr>
                                     </thead>
                                     <tbody id="summary-body"></tbody>
@@ -634,10 +634,10 @@
         </div>
     </div>
 
-    <!-- ⚡ SYSTEM MASTER SCRIPTS LAYER ENGINE CONTROL MAPS -->
+    <!-- ⚡ SYSTEM MASTER SCRIPTS LAYER -->
     <script>
         let currentUser = null;
-        let globalDatabase = JSON.parse(localStorage.getItem('uni_core_users_v4')) || {};
+        let globalDatabase = JSON.parse(localStorage.getItem('uni_core_users_v5')) || {};
         let state = { timetable: [], attendance: [], notes: [], syllabus: [], timetableFile: '', settings: { name: '', sem: '', roll: '', avatar: '' } };
         let attendanceChart = null;
         let tempSyllabusFileBase64 = '';
@@ -668,7 +668,7 @@
                 settings: { name: name, sem: 'Semester 4', roll: '01', avatar: '' }
             };
 
-            localStorage.setItem('uni_core_users_v4', JSON.stringify(globalDatabase));
+            localStorage.setItem('uni_core_users_v5', JSON.stringify(globalDatabase));
             alert("Student Credentials Allocated Securely!");
             toggleAuthCard(false);
             e.target.reset();
@@ -875,7 +875,7 @@
         function commitCurrentStateToDisk() {
             if(!currentUser) return;
             globalDatabase[currentUser] = state;
-            localStorage.setItem('uni_core_users_v4', JSON.stringify(globalDatabase));
+            localStorage.setItem('uni_core_users_v5', JSON.stringify(globalDatabase));
         }
 
         function initNavigation() {
@@ -907,7 +907,7 @@
             tbody.innerHTML = '';
             
             if(state.timetable.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);;">No interactive modules routine mapped.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);;">No routines mapped.</td></tr>`;
                 return;
             }
             state.timetable.forEach((item, idx) => {
@@ -943,32 +943,32 @@
             alert(`Attendance logged successfully for ${lecture.subject}!`);
         }
 
-        // RENDER ATTENDANCE BLOCK WITH REAL DELETE LOGIC
+        // --- 🛠️ FIX: FIXED ATTENDANCE BLOCK RENDERING & PURGE ENGINE ---
         function renderAttendanceBlock() {
             const tbody = document.getElementById('summary-body');
             tbody.innerHTML = '';
             
-            if(state.attendance.length === 0) {
+            if(!state.attendance || state.attendance.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No attendance logged yet.</td></tr>`;
                 return;
             }
 
-            // Map original index to tracking for correct deletion logic after sorting
-            let mappedAttendance = state.attendance.map((item, originalIndex) => {
-                return { ...item, originalIndex: originalIndex };
+            // Create explicit object arrays referencing absolute structural metadata indexing pointers
+            let indexedStream = state.attendance.map((item, absoluteIndex) => {
+                return { ...item, absoluteIndex: absoluteIndex };
             });
 
-            // Sort by latest date
-            mappedAttendance.sort((a,b) => new Date(b.date) - new Date(a.date));
+            // Process chronological reverse synchronization
+            indexedStream.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            mappedAttendance.slice(0, 15).forEach(item => {
+            indexedStream.forEach(item => {
                 tbody.innerHTML += `
                     <tr>
                         <td>${item.date}</td>
                         <td><b>${item.subject}</b></td>
                         <td class="${item.status === 'Present' ? 'text-success' : 'text-danger'}"><b>${item.status}</b></td>
                         <td>
-                            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; border-radius:4px;" onclick="deleteAttendanceLog(${item.originalIndex})">
+                            <button class="btn btn-danger" style="padding:5px 10px; font-size:0.75rem; border-radius:6px;" onclick="deleteAttendanceLog(${item.absoluteIndex})">
                                 <i class="fa-solid fa-trash-can"></i> Delete
                             </button>
                         </td>
@@ -976,13 +976,14 @@
             });
         }
 
-        // DESTRUCTION EXECUTION METHOD FOR SPECIFIC LOGGED ATTENDANCE NODE
-        function deleteAttendanceLog(originalIndex) {
-            if(confirm("Are you sure you want to delete this specific attendance entry log?")) {
-                state.attendance.splice(originalIndex, 1);
+        // DESTRUCTION MATRIX METHOD EXECUTION
+        function deleteAttendanceLog(targetAbsoluteIndex) {
+            if(confirm("Are you sure you want to completely delete this attendance record entry?")) {
+                state.attendance.splice(targetAbsoluteIndex, 1);
                 commitCurrentStateToDisk();
                 renderDashboard();
-                renderAttendanceBlock(); // Refresh active dynamic view state
+                renderAttendanceBlock(); // Dynamic UI reconstruction sweep
+                alert("Attendance record successfully purged.");
             }
         }
 
